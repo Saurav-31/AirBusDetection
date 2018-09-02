@@ -1,5 +1,6 @@
 from torchvision import transforms, utils, models
 from dataloader import Airbus
+from parse_config import *
 import numpy as np
 import torch.optim as optim
 import torch
@@ -14,18 +15,20 @@ from utils import *
 from train_model import train, test
 warnings.filterwarnings(action='ignore')
 
-size = 224
+conf = parse_cmd_args()
+
+size = conf['imsize']
+
 data_transform = transforms.Compose([transforms.Resize(256), transforms.CenterCrop(size),
                                      transforms.RandomAffine(0, scale=(1.1, 1.4)),
                                      transforms.ToTensor(), transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])])
 
-data_transform1 = transforms.Compose([transforms.RandomAffine(0, scale=(1.4, 2.0)), transforms.ToTensor(), transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])])
+data_transform1 = transforms.Compose([transforms.Resize(size), transforms.RandomAffine(0, scale=(0.8, 1.3)),
+                                      transforms.ToTensor(), transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])])
 
-airbus_data = Airbus(filename='train_ship_segmentations.csv', root_dir='/mnt/sqnap/ntarigo/datasets/kaggle/ship/', train=True,
-                     transform=data_transform1)
+airbus_data = Airbus(filename='train_ship_segmentations.csv', root_dir=conf['data'], train=True, transform=data_transform1)
 
-test_dataset = Airbus(filename='train_ship_segmentations.csv', root_dir='/mnt/sqnap/ntarigo/datasets/kaggle/ship/', train=False,
-                      transform=data_transform1)
+test_dataset = Airbus(filename='train_ship_segmentations.csv', root_dir=conf['data'], train=False, transform=data_transform1)
 
 data_iter = iter(airbus_data)
 
@@ -39,9 +42,9 @@ data, masks, labels = sample['image'], sample['masks'], sample['labels']
 show_sample(data, masks)
 print(labels)
 
-validation_split = 0.1
+validation_split = conf['val_split']
 shuffle_dataset = True
-random_seed = 42
+random_seed = conf['seed']
 
 # Creating data indices for training and validation splits:
 dataset_size = len(airbus_data)
@@ -56,13 +59,13 @@ train_indices, val_indices = indices[split:], indices[:split]
 train_sampler = SubsetRandomSampler(train_indices)
 valid_sampler = SubsetRandomSampler(val_indices)
 
-train_loader = torch.utils.data.DataLoader(airbus_data, batch_size=32, sampler=train_sampler)
-validation_loader = torch.utils.data.DataLoader(airbus_data, batch_size=32, sampler=valid_sampler)
-test_loader = torch.utils.data.DataLoader(test_dataset, batch_size=16)
+train_loader = torch.utils.data.DataLoader(airbus_data, batch_size=conf['batch_size'], sampler=train_sampler)
+validation_loader = torch.utils.data.DataLoader(airbus_data, batch_size=conf['batch_size'], sampler=valid_sampler)
+test_loader = torch.utils.data.DataLoader(test_dataset, batch_size=conf['batch_size'])
 
 use_cuda = torch.cuda.is_available()
 device = torch.device("cuda" if use_cuda else "cpu")
-torch.cuda.set_device(5)
+#torch.cuda.set_device(conf['gpu'])
 print(device)
 
 dataloaders = {'train': train_loader, 'val': validation_loader}
@@ -76,7 +79,7 @@ model_ft = model_ft.to(device)
 criterion = nn.CrossEntropyLoss()
 
 # Observe that all parameters are being optimized
-optimizer_ft = optim.SGD(model_ft.parameters(), lr=0.001, momentum=0.9)
+optimizer_ft = optim.SGD(model_ft.parameters(), lr=conf['lr'], momentum=conf['momentum'])
 
 pred_list, gt_list = [], []
 
