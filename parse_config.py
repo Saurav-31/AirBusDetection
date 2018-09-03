@@ -22,5 +22,5 @@ def parse_cmd_args():
 
     inp_im_size = {'resnet50': 224, 'resnet150': 224, 'vgg16': 256, 'inceptionv3': 299}
     args['imsize'] = inp_im_size[args['model']]
-
+    args['batch_size'] = args['batch_size'] * args['num_gpus']
     return args

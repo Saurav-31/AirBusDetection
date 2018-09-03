@@ -39,8 +39,8 @@ data, masks, labels = sample['image'], sample['masks'], sample['labels']
 # ax1.imshow(data.numpy().transpose(1, 2, 0))
 # ax2.imshow(masks)
 # plt.show()
-show_sample(data, masks)
-print(labels)
+# show_sample(data, masks)
+# print(labels)
 
 validation_split = conf['val_split']
 shuffle_dataset = True
@@ -75,6 +75,13 @@ model_ft = models.resnet50(pretrained=True)
 num_ftrs = model_ft.fc.in_features
 model_ft.fc = nn.Linear(num_ftrs, 2)
 model_ft = model_ft.to(device)
+
+ngpu = conf['num_gpus']
+gpu_ids = []
+if ngpu > 1:
+  for i in range(ngpu):
+    gpu_ids.append(i)
+  model_ft = torch.nn.DataParallel(model_ft, device_ids=gpu_ids)
 
 criterion = nn.CrossEntropyLoss()
 
