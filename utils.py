@@ -57,7 +57,7 @@ def masks_as_color(in_mask_list):
     scale = lambda x: (len(in_mask_list)+x+1) / (len(in_mask_list)*2) ## scale the heatmap image to shift
     for i,mask in enumerate(in_mask_list):
         if isinstance(mask, str):
-            all_masks[:,:] += scale(i) * rle_decode(mask)
+            all_masks[:, :] += scale(i) * rle_decode(mask)
     return all_masks
 
 def imshow(inp, title=None):
@@ -75,11 +75,38 @@ def imshow(inp, title=None):
 
 def show_sample(inp, masks):
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 5))
-    inp = inp.numpy().transpose((1, 2, 0))
-    mean = np.array([0.485, 0.456, 0.406])
-    std = np.array([0.229, 0.224, 0.225])
-    inp = std * inp + mean
-    inp = np.clip(inp, 0, 1)
+    inp = cnv2numpy(inp)
+    masks = cnv2numpy(masks)
     ax1.imshow(inp)
     ax2.imshow(masks)
     plt.show()
+
+def show_sample2(inp, masks, gt, imgname):
+    # print(inp.size(), masks.size(), gt.size())
+    print(inp.max(), masks.max(), gt.max())
+    fig, (ax1, ax2, ax3) = plt.subplots(1, 3, figsize=(12, 5))
+    inp = inp.cpu().detach().numpy().transpose((1, 2, 0))
+    masks = masks.cpu().detach().numpy().transpose((1, 2, 0))
+    gt = gt.cpu().detach().numpy().transpose((1, 2, 0))
+    ax1.imshow(inp)
+    ax2.imshow(masks)
+    ax3.imshow(gt)
+    plt.show()
+    fig.savefig("image_dump/{}".format(imgname))
+
+def show_sample3(inp, masks):
+    # print(inp.size(), masks.size())
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 5))
+    inp = inp.cpu().detach().numpy().transpose((1, 2, 0))
+    masks = masks.cpu().detach().numpy().transpose((1, 2, 0))
+    ax1.imshow(inp)
+    ax2.imshow(masks)
+    plt.show()
+
+def cnv2numpy(x):
+    x = x.numpy().transpose((1, 2, 0))
+    mean = np.array([0.485, 0.456, 0.406])
+    std = np.array([0.229, 0.224, 0.225])
+    x = std * x + mean
+    x = np.clip(x, 0, 1)
+    return x

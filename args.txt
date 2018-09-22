@@ -1,0 +1,2 @@
+python mainfile.py -data /mnt/sqnap/ntarigo/datasets/kaggle/ship/ -model resnet50 -gpu 0 -save_path /mnt/sqnap/Saurav_G/experiments/AirBusDetection/ -scale True -num_gpus 1 -batch_size 4
+

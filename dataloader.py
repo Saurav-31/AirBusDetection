@@ -29,6 +29,7 @@ class Airbus(Dataset):
         jpg_to_tensor = transforms.ToTensor()
         tensor_to_pil = transforms.ToPILImage()
         image = tensor_to_pil(jpg_to_tensor(image))
+
         if self.train:
             rle = self.fk_frame.loc[self.fk_frame.ImageId == self.imgnames[idx], 'EncodedPixels']
             masks = masks_as_image(rle)
@@ -45,7 +46,8 @@ class Airbus(Dataset):
 
         if self.transform:
             image = self.transform(image)
-            # masks = self.transform(masks)
+            masks = tensor_to_pil(jpg_to_tensor(np.dstack([masks]*3)))
+            masks = self.transform(masks)*255.0
             sample = {'image': image, 'masks': masks, 'labels': label}
 
         return sample

@@ -24,3 +24,6 @@ def parse_cmd_args():
     args['imsize'] = inp_im_size[args['model']]
     args['batch_size'] = args['batch_size'] * args['num_gpus']
     return args
+
+
+# parse_cmd_args()
