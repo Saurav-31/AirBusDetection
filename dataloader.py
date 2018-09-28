@@ -38,7 +38,7 @@ class Airbus(Dataset):
             else:
                 label = 0
         else:
-            masks = np.zeros(shape=image.shape, dtype=np.uint16)
+            masks = np.zeros(shape=(768,768), dtype=np.uint8)
             label = 0
 
         if image is not None:

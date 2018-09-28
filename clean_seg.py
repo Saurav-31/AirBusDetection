@@ -1,3 +1,5 @@
+import matplotlib
+matplotlib.use('Agg')
 from torchvision import transforms, utils, models
 from dataloader import Airbus
 from parse_config import *
@@ -13,7 +15,7 @@ import warnings
 import time
 from utils import *
 # from train_model import train, test
-from train import train, test
+from train import train, val
 warnings.filterwarnings(action='ignore')
 
 conf = parse_cmd_args()
@@ -57,6 +59,9 @@ if shuffle_dataset:
     np.random.shuffle(indices)
 train_indices, val_indices = indices[split:], indices[:split]
 
+print('Train Images', len(train_indices))
+print('Validation Images', len(val_indices))
+
 # Creating PT data samplers and loaders:
 train_sampler = SubsetRandomSampler(train_indices)
 valid_sampler = SubsetRandomSampler(val_indices)
@@ -72,41 +77,46 @@ torch.cuda.set_device(conf['gpu'])
 print(device)
 
 dataloaders = {'train': train_loader, 'val': validation_loader}
-dataset_sizes = {'train': 93664, 'val': 10432}
+dataset_sizes = {'train': len(train_indices), 'val': len(val_indices)}
 
 from ptsemseg.models.fcn import fcn8s
 
 model = fcn8s(n_classes=1)
+vgg16 = models.vgg16(pretrained=True)
+model.init_vgg16_params(vgg16)
 model = model.to(device)
+
+if conf['num_gpus'] >1:
+    model = torch.nn.DataParallel(model, device_ids=range(torch.cuda.device_count()))
 
 criterion = nn.BCEWithLogitsLoss()
 
 # Observe that all parameters are being optimized
 optimizer_ft = optim.SGD(model.parameters(), lr=conf['lr'], momentum=conf['momentum'])
 
-sample = next(iter(train_loader))
-out = model(sample['image'].float().to(device))
-out.max()
-out.shape
-torch.nn.Sigmoid()(out[0])
-torch.nn.Sigmoid()(out[0])>0.5
-sample['masks'][0]
+#sample = next(iter(train_loader))
+#out = model(sample['image'].float().to(device))
+#out.max()  
+#out.shape
+#torch.nn.Sigmoid()(out[0])
+#torch.nn.Sigmoid()(out[0])>0.5
+#sample['masks'][0]
 
-nn.Softmax2d()(out).max()
+#nn.Softmax2d()(out).max()
 
-pred = nn.Softmax2d()(out)
+#pred = nn.Softmax2d()(out)
 from train import accuracy, iou
-
-accuracy(pred, sample['masks'].float().to(device))
-iou(pred, sample['masks'].float().to(device))
+#print(pred.size())
+#accuracy(pred, sample['masks'].float().to(device))
+#iou(pred[0], sample['masks'][0].float().to(device))
 
 epochs = 6
 since = time.time()
 for epoch in range(1, epochs + 1):
-    train(model, device, train_loader, optimizer_ft, epoch, criterion)
-    test(model, device, validation_loader)
+    train(model, device, train_loader, optimizer_ft, epoch, criterion, conf)
+    val(model, device, validation_loader, epoch, dataset_sizes['val'], conf)
 
     print("Time Taken for epoch%d: %d sec"%(epoch, time.time()-since))
     since = time.time()
-    if epoch % 2 == 0:
+    if epoch % 1 == 0:
         torch.save(model.state_dict(), "./models/FCN8_ep%d.net" % epoch)

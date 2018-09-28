@@ -83,7 +83,7 @@ def show_sample(inp, masks):
 
 def show_sample2(inp, masks, gt, imgname):
     # print(inp.size(), masks.size(), gt.size())
-    print(inp.max(), masks.max(), gt.max())
+    # print(inp.max(), masks.max(), gt.max())
     fig, (ax1, ax2, ax3) = plt.subplots(1, 3, figsize=(12, 5))
     inp = inp.cpu().detach().numpy().transpose((1, 2, 0))
     masks = masks.cpu().detach().numpy().transpose((1, 2, 0))
@@ -91,10 +91,10 @@ def show_sample2(inp, masks, gt, imgname):
     ax1.imshow(inp)
     ax2.imshow(masks)
     ax3.imshow(gt)
-    plt.show()
+    #plt.show()
     fig.savefig("image_dump/{}".format(imgname))
 
-def show_sample3(inp, masks):
+def show_sample3(inp, masks, imgname):
     # print(inp.size(), masks.size())
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 5))
     inp = inp.cpu().detach().numpy().transpose((1, 2, 0))
@@ -102,6 +102,7 @@ def show_sample3(inp, masks):
     ax1.imshow(inp)
     ax2.imshow(masks)
     plt.show()
+    fig.savefig("test_image_dump/{}".format(imgname))
 
 def cnv2numpy(x):
     x = x.numpy().transpose((1, 2, 0))
